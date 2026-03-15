@@ -2,41 +2,92 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --app-bg: #010101;
+  --app-fg: #f5f5f5;
+  --app-muted: #9a9a9a;
+  --app-line: rgba(255, 255, 255, 0.18);
+  --app-line-strong: rgba(255, 255, 255, 0.36);
+  --panel-bg: rgba(4, 4, 4, 0.86);
+}
+
 @layer base {
   html {
     @apply h-full;
   }
   body {
-    @apply h-full text-slate-100;
-    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+    @apply h-full;
+    color: var(--app-fg);
+    font-family: 'IBM Plex Mono', 'Space Mono', 'Consolas', 'SFMono-Regular', 'Segoe UI', monospace;
+    letter-spacing: 0.01em;
     background:
-      radial-gradient(1200px 700px at 0% 0%, rgba(255, 255, 255, 0.07), transparent 45%),
-      radial-gradient(900px 600px at 100% 0%, rgba(255, 255, 255, 0.05), transparent 40%),
-      linear-gradient(180deg, #020202 0%, #0a0a0a 100%);
+      radial-gradient(900px 600px at 10% -10%, rgba(255, 255, 255, 0.08), transparent 55%),
+      radial-gradient(900px 640px at 100% 10%, rgba(255, 255, 255, 0.06), transparent 55%),
+      linear-gradient(180deg, var(--app-bg) 0%, #050505 100%);
+    background-size: auto, auto, auto;
+    background-attachment: fixed;
   }
   #root {
     @apply h-full;
+  }
+
+  ::selection {
+    background: #f5f5f5;
+    color: #050505;
   }
 }
 
 @layer utilities {
   .blueprint-grid {
-    background-image:
-      linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
-    background-size: 28px 28px;
-    background-position: -1px -1px;
+    background-image: none;
   }
 
   .scanline {
-    background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.05) 49%, transparent 100%);
-    background-size: 100% 5px;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.04) 49%,
+      transparent 100%
+    );
+    background-size: 100% 4px;
   }
 
   .panel-glass {
-    background: rgba(10, 10, 10, 0.72);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: var(--panel-bg);
+    border: 1px solid var(--app-line);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  }
+
+  .terminal-chip {
+    border: 1px solid var(--app-line);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--app-muted);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    font-size: 10px;
+  }
+
+  .terminal-btn {
+    border: 1px solid var(--app-line);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--app-fg);
+    transition: all 150ms ease;
+  }
+
+  .terminal-btn:hover {
+    border-color: var(--app-line-strong);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .terminal-btn-primary {
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    background: rgba(255, 255, 255, 0.9);
+    color: #060606;
+  }
+
+  .terminal-btn-primary:hover {
+    background: #ffffff;
+    border-color: #ffffff;
   }
 }
 
@@ -49,10 +100,11 @@
   @apply bg-transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-600 rounded-full;
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-500;
+  background: rgba(255, 255, 255, 0.45);
 }
 
 /* Blinking cursor for streaming output */

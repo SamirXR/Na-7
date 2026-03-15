@@ -12,29 +12,40 @@ interface Props {
   selectedId: string;
   onSelect(id: string): void;
   webGPUAvailable: boolean;
+  pinnedModelIds: string[];
+  onTogglePinned(id: string, pinned: boolean): void;
+  onDownloadOffline(id: string): void;
 }
 
 function getCardClasses(selected: boolean, disabled: boolean) {
   if (disabled) {
-    return 'cursor-not-allowed border-slate-700/70 bg-slate-900/55 opacity-40';
+    return 'cursor-not-allowed border-white/10 bg-black/50 opacity-40';
   }
 
   if (selected) {
     return [
-      'border-slate-100/90 bg-slate-800/95 ring-1 ring-slate-200/80',
-      'shadow-[0_0_0_1px_rgba(248,250,252,0.18),0_18px_40px_rgba(0,0,0,0.45)]',
+      'border-white/70 bg-black/90 ring-1 ring-white/55',
+      'shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_20px_40px_rgba(0,0,0,0.55)]',
     ].join(' ');
   }
 
-  return 'border-slate-700/70 bg-slate-950/75 hover:border-slate-400/70 hover:bg-slate-900/90';
+  return 'border-white/15 bg-black/70 hover:border-white/45 hover:bg-black/90';
 }
 
-export default function ModelSelector({ models, selectedId, onSelect, webGPUAvailable }: Props) {
+export default function ModelSelector({
+  models,
+  selectedId,
+  onSelect,
+  webGPUAvailable,
+  pinnedModelIds,
+  onTogglePinned,
+  onDownloadOffline,
+}: Props) {
   const deviceMemoryGb = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? null;
 
   return (
     <div className="p-4 space-y-3">
-      <h2 className="text-[11px] font-semibold text-slate-100 tracking-[0.08em] mb-4">
+      <h2 className="text-[11px] font-semibold text-slate-100 tracking-[0.2em] mb-4 uppercase">
         02 // Model bank
       </h2>
 
@@ -42,6 +53,7 @@ export default function ModelSelector({ models, selectedId, onSelect, webGPUAvai
         const disabled = model.requiresWebGPU && !webGPUAvailable;
         const memoryWarning = deviceMemoryGb !== null && model.vramGb > deviceMemoryGb;
         const selected = selectedId === model.id;
+        const pinned = pinnedModelIds.includes(model.id);
 
         return (
           <button
@@ -81,7 +93,7 @@ export default function ModelSelector({ models, selectedId, onSelect, webGPUAvai
                   BADGE_STYLES[model.badge] ?? 'bg-slate-700 text-slate-300'
                 }`}
               >
-                {model.badge}
+                [{model.badge}]
               </span>
             </div>
 
@@ -113,6 +125,31 @@ export default function ModelSelector({ models, selectedId, onSelect, webGPUAvai
                 Requires WebGPU — unavailable in this browser
               </p>
             )}
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              <label className="inline-flex items-center gap-2 text-xs text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={pinned}
+                  onChange={(e) => onTogglePinned(model.id, e.target.checked)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="accent-slate-200"
+                />
+                Keep available offline
+              </label>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDownloadOffline(model.id);
+                }}
+                disabled={disabled}
+                className="text-xs px-2.5 py-1 rounded-lg terminal-btn-primary disabled:bg-slate-700 disabled:text-slate-400"
+              >
+                Download for offline
+              </button>
+            </div>
           </button>
         );
       })}

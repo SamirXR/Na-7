@@ -15,6 +15,8 @@ export interface UseChatReturn {
   isGenerating: boolean;
   systemPrompt: string;
   setSystemPrompt(p: string): void;
+  replaceMessages(next: Message[]): void;
+  addAssistantNote(content: string): void;
   sendMessage(
     userContent: string,
     sendChat: (msgs: ChatMessage[], onToken: (t: string) => void) => Promise<void>,
@@ -43,6 +45,21 @@ export function useChat(): UseChatReturn {
   const setSystemPrompt = useCallback((p: string) => {
     setSystemPromptState(p);
     localStorage.setItem('systemPrompt', p);
+  }, []);
+
+  const replaceMessages = useCallback((next: Message[]) => {
+    setMessages(next);
+  }, []);
+
+  const addAssistantNote = useCallback((content: string) => {
+    setMessages(prev => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content,
+      },
+    ]);
   }, []);
 
   const sendMessage = useCallback(
@@ -126,6 +143,8 @@ export function useChat(): UseChatReturn {
     isGenerating,
     systemPrompt,
     setSystemPrompt,
+    replaceMessages,
+    addAssistantNote,
     sendMessage,
     stopGenerating,
     clearMessages,

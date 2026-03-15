@@ -6,7 +6,7 @@ interface Props {
 
 export default function StatusBadge({ backend, webGPUAvailable, gpuAdapterName }: Props) {
   const isGPU = backend === 'webgpu';
-  const runtimeLabel = backend ? (isGPU ? 'GPU Active' : 'CPU Active') : 'No Model Loaded';
+  const runtimeLabel = backend ? (isGPU ? '[ GPU ACTIVE ]' : '[ CPU ACTIVE ]') : '[ NO MODEL ]';
 
   return (
     <div className="flex items-center gap-2 text-xs flex-wrap">
@@ -22,13 +22,13 @@ export default function StatusBadge({ backend, webGPUAvailable, gpuAdapterName }
       />
 
       {/* Active runtime label */}
-      <span className={backend ? 'text-emerald-400' : 'text-slate-400'}>
+      <span className={backend ? 'text-emerald-400 tracking-[0.08em] text-[11px]' : 'text-slate-400 tracking-[0.08em] text-[11px]'}>
         {runtimeLabel}
       </span>
 
       {/* Capability check */}
-      <span className={webGPUAvailable ? 'text-slate-300' : 'text-slate-500'}>
-        {webGPUAvailable ? 'WebGPU Supported' : 'WebGPU Unavailable'}
+      <span className={webGPUAvailable ? 'text-slate-300 text-[11px]' : 'text-slate-500 text-[11px]'}>
+        {webGPUAvailable ? 'WEBGPU OK' : 'WEBGPU OFF'}
       </span>
 
       {/* GPU adapter name (when available) */}

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { Message } from '../hooks/useChat';
 
@@ -7,6 +7,37 @@ interface Props {
   isGenerating: boolean;
   assistantLogoSrc?: string;
   assistantLabel?: string;
+}
+
+function CodeBlock({ className, children }: { className?: string; children: React.ReactNode }) {
+  const [copied, setCopied] = useState(false);
+  const text = String(children).replace(/\n$/, '');
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1400);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <div className="relative my-3 rounded-xl border border-white/20 bg-black/80">
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="absolute right-2 top-2 terminal-btn px-2 py-1 text-[10px] rounded-md tracking-[0.08em] uppercase"
+        aria-label="Copy code"
+      >
+        {copied ? 'Copied' : 'Copy'}
+      </button>
+      <pre className="overflow-x-auto px-3 py-3 pr-16 text-[13px] leading-6 text-slate-100">
+        <code className={className}>{text}</code>
+      </pre>
+    </div>
+  );
 }
 
 export default function ChatWindow({ messages, isGenerating, assistantLogoSrc, assistantLabel = 'AI' }: Props) {
@@ -23,9 +54,14 @@ export default function ChatWindow({ messages, isGenerating, assistantLogoSrc, a
     return (
       <div className="flex-1 flex items-center justify-center p-8 blueprint-grid">
         <div className="text-center max-w-sm panel-glass rounded-2xl p-6">
-          <div className="text-4xl mb-4 text-slate-100">[ AI ]</div>
-          <h2 className="text-xl font-semibold text-slate-200 mb-2 tracking-[0.04em]">Local AI terminal</h2>
-          <p className="text-sm text-slate-400 tracking-normal">
+          <img
+            src="/logo.png"
+            alt="Na7 Chat logo"
+            className="w-14 h-14 mx-auto mb-4 rounded-xl object-contain"
+            loading="lazy"
+          />
+          <h2 className="text-lg font-semibold text-slate-100 mb-2 tracking-[0.16em] uppercase">Na7 Chat Terminal</h2>
+          <p className="text-xs text-slate-400 tracking-[0.08em] uppercase">
             All inference runs in your browser. No data ever leaves your device.
           </p>
         </div>
@@ -45,7 +81,7 @@ export default function ChatWindow({ messages, isGenerating, assistantLogoSrc, a
           >
             {/* Avatar */}
             {msg.role === 'assistant' && (
-              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-slate-700 border border-slate-300/40 flex items-center justify-center text-[10px] font-bold mt-0.5 overflow-hidden">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-black border border-white/30 flex items-center justify-center text-[10px] font-bold mt-0.5 overflow-hidden">
                 {assistantLogoSrc ? (
                   <img
                     src={assistantLogoSrc}
@@ -63,8 +99,8 @@ export default function ChatWindow({ messages, isGenerating, assistantLogoSrc, a
               className={[
                 'max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
                 msg.role === 'user'
-                  ? 'bg-slate-200 text-black rounded-tr-sm border border-slate-400/50'
-                  : 'panel-glass text-slate-100 rounded-tl-sm border-slate-600/60',
+                  ? 'bg-slate-100 text-black rounded-tr-sm border border-white/60'
+                  : 'panel-glass text-slate-100 rounded-tl-sm border-white/20',
               ].join(' ')}
             >
               {msg.role === 'assistant' ? (
@@ -72,12 +108,34 @@ export default function ChatWindow({ messages, isGenerating, assistantLogoSrc, a
                   <div
                     className={[
                       'prose prose-invert prose-sm max-w-none',
-                      'prose-p:my-1 prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700',
-                      'prose-code:text-indigo-300 prose-code:bg-slate-900 prose-code:px-1 prose-code:rounded',
+                      'prose-p:my-1',
+                      'prose-code:text-slate-200 prose-code:bg-black prose-code:px-1 prose-code:rounded',
                       isStreaming && !msg.content ? 'cursor-blink' : '',
                     ].join(' ')}
                   >
-                    <ReactMarkdown>
+                    <ReactMarkdown
+                      components={{
+                        code(props) {
+                          const { inline, className, children, ...rest } = props as {
+                            inline?: boolean;
+                            className?: string;
+                            children?: React.ReactNode;
+                          };
+
+                          if (inline) {
+                            return (
+                              <code className={className} {...rest}>
+                                {children}
+                              </code>
+                            );
+                          }
+
+                          return (
+                            <CodeBlock className={className}>{children}</CodeBlock>
+                          );
+                        },
+                      }}
+                    >
                       {msg.content || (isStreaming ? '' : '…')}
                     </ReactMarkdown>
                     {isStreaming && msg.content && (
@@ -100,7 +158,7 @@ export default function ChatWindow({ messages, isGenerating, assistantLogoSrc, a
 
             {/* User avatar */}
             {msg.role === 'user' && (
-              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-slate-700 border border-slate-500/50 flex items-center justify-center text-xs font-bold mt-0.5">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-black border border-white/30 flex items-center justify-center text-[10px] font-bold mt-0.5 tracking-[0.08em] uppercase">
                 You
               </div>
             )}
