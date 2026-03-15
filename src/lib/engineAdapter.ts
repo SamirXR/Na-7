@@ -31,6 +31,13 @@ export class WebLLMAdapter implements EngineAdapter {
   private engine: any = null;
   private loaded = false;
 
+  private isCacheAddNetworkError(error: unknown): boolean {
+    const msg = error instanceof Error ? error.message : String(error ?? '');
+    return /Cache\.add\(\).*network error/i.test(msg)
+      || /Failed to execute 'add' on 'Cache'/i.test(msg)
+      || /encountered a network error/i.test(msg);
+  }
+
   private normalizeProgress(progress: number): number {
     if (!Number.isFinite(progress)) return 0;
     const scaled = progress <= 1 ? progress * 100 : progress;
@@ -44,11 +51,29 @@ export class WebLLMAdapter implements EngineAdapter {
     // Dynamic import keeps web-llm out of the main bundle (top-level await)
     const { CreateMLCEngine } = await import('@mlc-ai/web-llm');
 
-    this.engine = await CreateMLCEngine(modelId, {
-      initProgressCallback: (report: { progress: number; text: string }) => {
-        onProgress(this.normalizeProgress(report.progress), report.text);
-      },
-    });
+    const progressCb = (report: { progress: number; text: string }) => {
+      onProgress(this.normalizeProgress(report.progress), report.text);
+    };
+
+    try {
+      this.engine = await CreateMLCEngine(modelId, {
+        initProgressCallback: progressCb,
+      });
+    } catch (error) {
+      if (!this.isCacheAddNetworkError(error)) {
+        throw error;
+      }
+
+      onProgress(3, 'Cache warmup failed on this host. Retrying without browser cache...');
+
+      // Some hosting/CDN paths can reject Cache.add() for model artifacts.
+      // Fallback keeps inference usable even when persistent browser caching fails.
+      const fallbackConfig: any = {
+        initProgressCallback: progressCb,
+        useIndexedDBCache: false,
+      };
+      this.engine = await CreateMLCEngine(modelId, fallbackConfig);
+    }
 
     this.loaded = true;
   }
