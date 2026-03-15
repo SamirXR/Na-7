@@ -49,28 +49,43 @@ export class WebLLMAdapter implements EngineAdapter {
     onProgress: (pct: number, msg: string) => void,
   ): Promise<void> {
     // Dynamic import keeps web-llm out of the main bundle (top-level await)
-    const { CreateMLCEngine } = await import('@mlc-ai/web-llm');
+    const { CreateMLCEngine, prebuiltAppConfig } = await import('@mlc-ai/web-llm');
 
     const progressCb = (report: { progress: number; text: string }) => {
       onProgress(this.normalizeProgress(report.progress), report.text);
     };
 
+    const hostedOnVercel = typeof location !== 'undefined' && /(?:^|\.)vercel\.app$/i.test(location.hostname);
+
+    const baseConfig = hostedOnVercel
+      ? {
+          initProgressCallback: progressCb,
+          appConfig: {
+            ...prebuiltAppConfig,
+            useIndexedDBCache: true,
+          },
+        }
+      : {
+          initProgressCallback: progressCb,
+        };
+
     try {
-      this.engine = await CreateMLCEngine(modelId, {
-        initProgressCallback: progressCb,
-      });
+      this.engine = await CreateMLCEngine(modelId, baseConfig);
     } catch (error) {
       if (!this.isCacheAddNetworkError(error)) {
         throw error;
       }
 
-      onProgress(3, 'Cache warmup failed on this host. Retrying without browser cache...');
+      onProgress(3, 'Cache API blocked on this host. Retrying with IndexedDB cache...');
 
       // Some hosting/CDN paths can reject Cache.add() for model artifacts.
-      // Fallback keeps inference usable even when persistent browser caching fails.
-      const fallbackConfig: any = {
+      // Retry with IndexedDB-backed cache to bypass Cache API add() failures.
+      const fallbackConfig = {
         initProgressCallback: progressCb,
-        useIndexedDBCache: false,
+        appConfig: {
+          ...prebuiltAppConfig,
+          useIndexedDBCache: true,
+        },
       };
       this.engine = await CreateMLCEngine(modelId, fallbackConfig);
     }
